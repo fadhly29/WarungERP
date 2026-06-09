@@ -25,6 +25,38 @@ create table users (
   deleted_at timestamp with time zone
 );
 
+-- Auto-create tenant + user row on signup
+create or replace function handle_new_user()
+returns trigger as $$
+declare
+  new_tenant_id uuid;
+  tenant_name text;
+  tenant_slug text;
+begin
+  tenant_name := coalesce(new.raw_user_meta_data->>'tenant_name', split_part(new.email, '@', 1));
+  tenant_slug := regexp_replace(lower(tenant_name), '[^a-z0-9]+', '-', 'g');
+  tenant_slug := trim(tenant_slug, '-');
+  if length(tenant_slug) < 4 then
+    tenant_slug := tenant_slug || '-warung';
+  end if;
+  tenant_slug := tenant_slug || '-' || substring(md5(gen_random_uuid()::text) from 1 for 6);
+
+  insert into public.tenants (name, slug)
+  values (tenant_name, tenant_slug)
+  returning id into new_tenant_id;
+
+  insert into public.users (id, email, tenant_id, role)
+  values (new.id, new.email, new_tenant_id, 'owner');
+
+  return new;
+end;
+$$ language plpgsql security definer;
+
+drop trigger if exists on_auth_user_created on auth.users;
+create trigger on_auth_user_created
+after insert on auth.users
+for each row execute function handle_new_user();
+
 -- Ingredients
 create table ingredients (
   id uuid primary key default uuid_generate_v4(),

@@ -18,6 +18,7 @@ export default function LoginPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const redirectTo = searchParams.get("next") ?? "/dashboard";
+  const justRegistered = searchParams.get("registered") === "true";
   const [error, setError] = useState("");
 
   const {
@@ -65,6 +66,11 @@ export default function LoginPage() {
         </CardHeader>
         <form onSubmit={handleSubmit(onSubmit)}>
           <CardContent className="space-y-4">
+            {justRegistered && (
+              <p className="rounded-md bg-emerald-50 p-3 text-xs font-medium text-emerald-700">
+                Akun berhasil dibuat! Silakan masuk dengan email dan password yang sudah didaftarkan.
+              </p>
+            )}
             <div className="space-y-2">
               <Label htmlFor="email">Email</Label>
               <Input

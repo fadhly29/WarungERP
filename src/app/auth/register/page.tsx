@@ -30,11 +30,11 @@ export default function RegisterPage() {
     setError("");
 
     const supabase = createClient();
-    const { data: result, error: signUpError } = await supabase.auth.signUp({
+    const { error: signUpError } = await supabase.auth.signUp({
       email: data.email,
       password: data.password,
       options: {
-        emailRedirectTo: `${window.location.origin}/auth/callback`,
+        data: { tenant_name: data.tenantName },
       },
     });
 
@@ -43,11 +43,7 @@ export default function RegisterPage() {
       return;
     }
 
-    if (result.session) {
-      router.push("/dashboard");
-    } else {
-      router.push(`/auth/verify-email?email=${encodeURIComponent(data.email)}`);
-    }
+    router.push("/auth/login?registered=true");
   };
 
   return (
@@ -66,11 +62,23 @@ export default function RegisterPage() {
         <CardHeader>
           <CardTitle>Daftar</CardTitle>
           <CardDescription>
-            Buat akun baru untuk mulai menggunakan WarungERP.
+            Buat akun baru dan langsung mulai menggunakan WarungERP.
           </CardDescription>
         </CardHeader>
         <form onSubmit={handleSubmit(onSubmit)}>
           <CardContent className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="tenantName">Nama Warung</Label>
+              <Input
+                id="tenantName"
+                type="text"
+                placeholder="Warung Makan Bahagia"
+                {...register("tenantName")}
+              />
+              {errors.tenantName && (
+                <p className="text-xs text-red-600">{errors.tenantName.message}</p>
+              )}
+            </div>
             <div className="space-y-2">
               <Label htmlFor="email">Email</Label>
               <Input

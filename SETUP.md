@@ -22,61 +22,34 @@ pnpm install
 
 1. Buka [Supabase Dashboard](https://supabase.com/dashboard)
 2. Klik **New Project**
-3. Pilih organization, isi nama project (misal: `warungerp-lite`)
-4. Pilih region terdekat (Southeast Asia: `ap-southeast-1`)
+3. Isi nama project (misal: `warungerp-lite`), password database
+4. Pilih region terdekat (`ap-southeast-1` untuk Jakarta)
 5. Pilih **Free** plan
 6. Klik **Create Project** — tunggu ~2 menit
 
-### 2.2 Setup Database Schema
+### 2.2 Setup Database
 
-1. Di Supabase Dashboard, buka **SQL Editor**
+1. Buka **SQL Editor** di Supabase Dashboard
 2. Klik **New Query**
-3. Copy seluruh isi file `supabase-migration.sql` dari project ini
+3. Copy seluruh isi file `supabase-migration.sql`
 4. Paste ke SQL Editor, klik **Run**
-5. Pastikan semua table muncul di **Table Editor** tanpa error
+5. Pastikan semua table dan trigger muncul tanpa error
+
+DB trigger `handle_new_user` akan otomatis membuat `tenants` + `users` row setiap ada user baru mendaftar. Tidak perlu setup manual.
 
 ### 2.3 Setup Authentication
 
+**Matikan email confirmation (wajib):**
+
 1. Buka **Authentication > Settings**
 2. Di tab **Email**:
-   - **Enable email confirmations** — ON (wajib untuk verifikasi email)
+   - **Enable email confirmations** — **OFF**
    - **Enable email/password** — ON
-   - **Enable magic link** — OFF (opsional, tidak dipakai)
+   - **Enable magic link** — OFF
 
-3. Di **Authentication > Email Templates**:
-   - Klik **Confirm signup**
-   - Ganti `{{ .ConfirmationURL }}` dengan:
-     ```
-     {{ .SiteURL }}/auth/callback?code={{ .TokenHash }}
-     ```
-   - Scroll ke bawah, klik **Save**
+> ⚠️ Kalau email confirmations ON, user tidak bisa langsung login setelah daftar karena harus verifikasi email dulu.
 
-### 2.4 Konfigurasi Email (Penting!)
-
-Default SMTP Supabase sering gagal deliver ke Gmail/inbox. Ganti dengan provider eksternal:
-
-**Opsi A: Resend (Recommended — free 100 email/hari)**
-
-1. Buka [Resend](https://resend.com), daftar akun gratis
-2. **Add Domain** — pakai domain kamu atau `resend.dev` untuk testing
-3. Buka **API Keys**, buat key baru, copy
-4. Di Supabase: **Authentication > Settings > Email > SMTP Settings**
-   - Host: `smtp.resend.com`
-   - Port: `587`
-   - Username: `resend`
-   - Password: (paste API key dari Resend)
-
-**Opsi B: SendGrid (free 100 email/hari)**
-
-1. Buka [SendGrid](https://sendgrid.com), daftar akun gratis
-2. Buat API key (Settings > API Keys > Create — pilih Restricted Access > Mail Send)
-3. Di Supabase: **Authentication > Settings > Email > SMTP Settings**
-   - Host: `smtp.sendgrid.net`
-   - Port: `587`
-   - Username: `apikey`
-   - Password: (paste API key dari SendGrid)
-
-### 2.5 Env Variables
+### 2.4 Environment Variables
 
 1. Di Supabase Dashboard, buka **Settings > API**
 2. Copy **Project URL** dan **anon public** key
@@ -98,66 +71,83 @@ Buka `http://localhost:3000`
 ## 4. Register & Login
 
 1. Buka `/auth/register`
-2. Isi email + password, klik **Daftar**
-3. Cek email — klik link verifikasi dari Supabase
-4. Otomatis login dan redirect ke `/dashboard`
+2. Isi **Nama Warung**, email, password → klik **Daftar**
+3. Otomatis redirect ke halaman login dengan notifikasi sukses
+4. Login dengan email dan password → langsung masuk dashboard
+
+Tanpa email verifikasi. Tanpa magic link.
 
 ## Struktur Project
 
 ```
 src/
-├── app/                    # Next.js App Router pages
+├── app/
 │   ├── auth/
-│   │   ├── login/          # Login page (email + password)
-│   │   ├── register/       # Registration page
-│   │   ├── verify-email/   # Email verification sent page
-│   │   └── callback/       # Auth callback handler
-│   └── (app)/              # Authenticated app routes
+│   │   ├── login/          # Email + password login
+│   │   ├── register/       # Register dengan nama warung
+│   │   └── callback/       # Auth callback (dipakai kalau email confirmation ON)
+│   └── (app)/
 │       └── dashboard/
-├── components/             # Shared UI components
-│   ├── ui/                 # Primitive UI (Button, Input, Card, dll)
-│   └── layout/             # Layout components (Sidebar, Navbar)
-├── features/               # Domain-specific modules
-│   └── auth/               # Auth schemas (Zod)
+├── components/
+│   ├── ui/                 # Button, Input, Card, dll
+│   └── layout/             # Sidebar, Navbar
+├── features/
+│   └── auth/               # Zod validation schemas
 ├── lib/
-│   └── supabase/           # Supabase clients (browser, server, middleware)
-├── stores/                 # Zustand stores
-├── providers/              # React context providers
-├── services/               # Data access layer
-└── types/                  # TypeScript type definitions
+│   └── supabase/           # Browser/server/middleware clients
+├── stores/                 # Zustand (auth store)
+├── providers/              # AuthProvider, QueryProvider
+├── services/               # Data access (Supabase RLS)
+└── types/                  # TypeScript types
 ```
 
 ## Commands
 
 | Command | Description |
 |---------|-------------|
-| `pnpm dev` | Start dev server |
+| `pnpm dev` | Dev server (localhost:3000) |
 | `pnpm build` | Production build |
-| `pnpm start` | Start production server |
-| `pnpm typecheck` | TypeScript type check |
-| `pnpm lint` | Lint all files |
+| `pnpm start` | Production server |
+| `pnpm typecheck` | TypeScript check |
+| `pnpm lint` | ESLint |
 
 ## Troubleshooting
 
-### Email verifikasi tidak terkirim
+### "Email not confirmed" saat login
 
-- Cek **Authentication > Settings > Enable email confirmations** — harus ON
-- Cek **SMTP Settings** — pastikan pakai Resend/SendGrid, jangan default Supabase
-- Cek spam folder di email
-- Free tier Supabase hanya 4 email/jam — tunggu kalau kena rate limit
+Cek **Authentication > Settings > Email** — **Enable email confirmations** harus **OFF**.
 
-### Redirect tidak jalan setelah klik link verifikasi
+### User tidak bisa akses data setelah login
 
-- Cek **Authentication > Email Templates > Confirm signup** — pastikan `ConfirmationURL` diganti formatnya seperti di langkah 2.3
+Pastikan trigger `on_auth_user_created` berjalan. Cek di **Table Editor**:
+1. Buka `auth.users` — pastikan user muncul
+2. Buka `public.tenants` — pastikan tenant dibuat
+3. Buka `public.users` — pastikan row dengan `id` yang sama muncul
 
-### User tidak bisa insert data setelah login
+Kalau kosong (misal user dari sebelum trigger ditambahkan), jalankan ini di **SQL Editor**:
 
-- Pastikan `users` table di `public` schema terisi (trigger dari `auth.users`)
-- Cek **SQL Editor** — pastikan `get_tenant_id()` function berjalan
-- Jalankan manual: `insert into public.users (id, email, tenant_id, role) select id, email, (insert into public.tenants ...)` untuk user pertama
+```sql
+insert into public.tenants (name, slug)
+select email, email || '-' || substring(md5(random()::text) from 1 for 6)
+from auth.users au
+where not exists (select 1 from public.users u where u.id = au.id);
+
+insert into public.users (id, email, tenant_id, role)
+select au.id, au.email, t.id, 'owner'
+from auth.users au
+join public.tenants t on t.name = au.email
+where not exists (select 1 from public.users u where u.id = au.id);
+```
 
 ### Port 3000 sudah dipakai
 
 ```bash
 pnpm dev -p 3001
 ```
+
+### Supabase free tier limit
+
+- 2 projects
+- 500MB database
+- 50.000 monthly active users
+- Rate limit signup: 4 request/jam
