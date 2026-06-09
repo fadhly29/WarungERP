@@ -23,7 +23,7 @@ export default function AuthCallbackPage() {
     <div className="flex min-h-screen items-center justify-center bg-slate-50">
       <div className="text-center">
         <Spinner />
-        <p className="mt-2 text-sm text-slate-500">Memproses login...</p>
+        <p className="mt-2 text-sm text-slate-500">Memproses...</p>
       </div>
     </div>
   );

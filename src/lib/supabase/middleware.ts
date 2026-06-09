@@ -41,7 +41,7 @@ export async function updateSession(
 
   const { pathname } = request.nextUrl;
 
-  const publicPaths = ["/auth/login", "/auth/callback", "/po/public"];
+  const publicPaths = ["/auth/login", "/auth/register", "/auth/verify-email", "/auth/callback", "/po/public"];
   const isPublic = publicPaths.some((p) => pathname.startsWith(p));
 
   if (!user && !isPublic) {
@@ -50,7 +50,8 @@ export async function updateSession(
     return NextResponse.redirect(url);
   }
 
-  if (user && pathname === "/auth/login") {
+  const authPaths = ["/auth/login", "/auth/register", "/auth/verify-email"];
+  if (user && authPaths.some((p) => pathname.startsWith(p))) {
     const url = request.nextUrl.clone();
     url.pathname = "/dashboard";
     return NextResponse.redirect(url);

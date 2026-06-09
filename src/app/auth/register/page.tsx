@@ -1,11 +1,11 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { createClient } from "@/lib/supabase/client";
-import { loginSchema, type LoginInput } from "@/features/auth/schemas";
+import { registerSchema, type RegisterInput } from "@/features/auth/schemas";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -14,33 +14,39 @@ import { Spinner } from "@/components/ui/spinner";
 import { ChefHat, ArrowRight } from "lucide-react";
 import Link from "next/link";
 
-export default function LoginPage() {
+export default function RegisterPage() {
   const router = useRouter();
-  const searchParams = useSearchParams();
-  const redirectTo = searchParams.get("next") ?? "/dashboard";
   const [error, setError] = useState("");
 
   const {
     register,
     handleSubmit,
     formState: { errors, isSubmitting },
-  } = useForm<LoginInput>({
-    resolver: zodResolver(loginSchema),
+  } = useForm<RegisterInput>({
+    resolver: zodResolver(registerSchema),
   });
 
-  const onSubmit = async (data: LoginInput) => {
+  const onSubmit = async (data: RegisterInput) => {
     setError("");
 
     const supabase = createClient();
-    const { error: loginError } = await supabase.auth.signInWithPassword({
+    const { data: result, error: signUpError } = await supabase.auth.signUp({
       email: data.email,
       password: data.password,
+      options: {
+        emailRedirectTo: `${window.location.origin}/auth/callback`,
+      },
     });
 
-    if (loginError) {
-      setError(loginError.message);
+    if (signUpError) {
+      setError(signUpError.message);
+      return;
+    }
+
+    if (result.session) {
+      router.push("/dashboard");
     } else {
-      router.push(redirectTo);
+      router.push(`/auth/verify-email?email=${encodeURIComponent(data.email)}`);
     }
   };
 
@@ -58,9 +64,9 @@ export default function LoginPage() {
 
       <Card className="w-full max-w-sm">
         <CardHeader>
-          <CardTitle>Masuk</CardTitle>
+          <CardTitle>Daftar</CardTitle>
           <CardDescription>
-            Masuk dengan email dan password.
+            Buat akun baru untuk mulai menggunakan WarungERP.
           </CardDescription>
         </CardHeader>
         <form onSubmit={handleSubmit(onSubmit)}>
@@ -89,6 +95,18 @@ export default function LoginPage() {
                 <p className="text-xs text-red-600">{errors.password.message}</p>
               )}
             </div>
+            <div className="space-y-2">
+              <Label htmlFor="confirmPassword">Konfirmasi Password</Label>
+              <Input
+                id="confirmPassword"
+                type="password"
+                placeholder="••••••"
+                {...register("confirmPassword")}
+              />
+              {errors.confirmPassword && (
+                <p className="text-xs text-red-600">{errors.confirmPassword.message}</p>
+              )}
+            </div>
             {error && (
               <p className="text-xs text-red-600">{error}</p>
             )}
@@ -99,24 +117,20 @@ export default function LoginPage() {
                 <Spinner className="py-0" />
               ) : (
                 <>
-                  Masuk
+                  Daftar
                   <ArrowRight className="h-4 w-4" />
                 </>
               )}
             </Button>
             <p className="text-xs text-slate-500">
-              Belum punya akun?{" "}
-              <Link href="/auth/register" className="text-emerald-600 hover:underline">
-                Daftar
+              Sudah punya akun?{" "}
+              <Link href="/auth/login" className="text-emerald-600 hover:underline">
+                Masuk
               </Link>
             </p>
           </CardFooter>
         </form>
       </Card>
-
-      <p className="mt-6 text-xs text-slate-400">
-        WarungERP Lite — ERP untuk UMKM Food &amp; Beverage
-      </p>
     </div>
   );
 }
