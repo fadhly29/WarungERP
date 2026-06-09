@@ -133,10 +133,14 @@ export function RecipeForm({ open, onOpenChange, editingRecipe, ingredients, onS
       items: items.map(({ key, ...rest }) => rest),
     };
 
-    if (editingRecipe) {
-      await updateMutation.mutateAsync({ id: editingRecipe.id, ...values });
-    } else {
-      await createMutation.mutateAsync(values);
+    try {
+      if (editingRecipe) {
+        await updateMutation.mutateAsync({ id: editingRecipe.id, ...values });
+      } else {
+        await createMutation.mutateAsync(values);
+      }
+    } catch {
+      // error handled by mutation state / parent
     }
   };
 

@@ -1,5 +1,6 @@
 import { createClient } from "@/lib/supabase/client";
 import type { Ingredient } from "@/types/database";
+import { getTenantId } from "./get-tenant-id";
 
 export async function getIngredients(): Promise<Ingredient[]> {
   const supabase = createClient();
@@ -35,7 +36,7 @@ export async function createIngredient(values: {
   const supabase = createClient();
   const { data, error } = await supabase
     .from("ingredients")
-    .insert(values)
+    .insert({ ...values, tenant_id: await getTenantId() })
     .select()
     .single();
 

@@ -1,5 +1,6 @@
 import { createClient } from "@/lib/supabase/client";
 import type { PurchaseOrder, PurchaseOrderItem } from "@/types/database";
+import { getTenantId } from "./get-tenant-id";
 
 export async function getPurchaseOrders(): Promise<PurchaseOrder[]> {
   const supabase = createClient();
@@ -56,6 +57,7 @@ export async function createPurchaseOrder(values: {
       is_public: values.is_public ?? false,
       total,
       status: "draft",
+      tenant_id: await getTenantId(),
     })
     .select()
     .single();

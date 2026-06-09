@@ -97,12 +97,16 @@ export function POForm({ open, onOpenChange, onSuccess }: POFormProps) {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    await createMutation.mutateAsync({
-      po_number: poNumber,
-      supplier,
-      notes: notes || undefined,
-      items: items.map(({ key, ...rest }) => rest),
-    });
+    try {
+      await createMutation.mutateAsync({
+        po_number: poNumber,
+        supplier,
+        notes: notes || undefined,
+        items: items.map(({ key, ...rest }) => rest),
+      });
+    } catch {
+      // error handled by mutation state
+    }
   };
 
   return (

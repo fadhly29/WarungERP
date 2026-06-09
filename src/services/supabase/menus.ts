@@ -1,5 +1,6 @@
 import { createClient } from "@/lib/supabase/client";
 import type { Menu } from "@/types/database";
+import { getTenantId } from "./get-tenant-id";
 
 export async function getMenus(): Promise<Menu[]> {
   const supabase = createClient();
@@ -44,6 +45,7 @@ export async function createMenu(values: {
       ...values,
       margin,
       margin_percent: Math.round(margin_percent * 100) / 100,
+      tenant_id: await getTenantId(),
     })
     .select()
     .single();

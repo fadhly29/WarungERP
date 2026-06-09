@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import { useForm, type Resolver } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { ingredientSchema, type IngredientFormValues } from "@/services/supabase/schemas";
@@ -30,6 +31,8 @@ export function IngredientForm({
   onSubmit,
   isSubmitting,
 }: IngredientFormProps) {
+  const [serverError, setServerError] = useState("");
+
   const {
     register,
     handleSubmit,
@@ -46,19 +49,26 @@ export function IngredientForm({
   });
 
   const handleFormSubmit = async (values: IngredientFormValues) => {
-    await onSubmit(values);
-    reset();
-    onOpenChange(false);
+    setServerError("");
+    try {
+      await onSubmit(values);
+      reset();
+      onOpenChange(false);
+    } catch (e) {
+      setServerError(e instanceof Error ? e.message : "Gagal menyimpan data");
+    }
+  };
+
+  const handleOpenChange = (isOpen: boolean) => {
+    if (!isOpen) {
+      reset();
+      setServerError("");
+    }
+    onOpenChange(isOpen);
   };
 
   return (
-    <Dialog
-      open={open}
-      onOpenChange={(open) => {
-        if (!open) reset();
-        onOpenChange(open);
-      }}
-    >
+    <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogContent>
         <DialogHeader>
           <DialogTitle>
@@ -105,6 +115,9 @@ export function IngredientForm({
               placeholder="Toko Maju Jaya (opsional)"
             />
           </div>
+          {serverError && (
+            <p className="text-xs text-red-600 bg-red-50 rounded-md p-2">{serverError}</p>
+          )}
           <DialogFooter>
             <Button type="submit" disabled={isSubmitting}>
               {isSubmitting ? <Spinner className="py-0" /> : "Simpan"}

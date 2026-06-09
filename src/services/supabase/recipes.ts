@@ -1,5 +1,6 @@
 import { createClient } from "@/lib/supabase/client";
 import type { Recipe, RecipeItem } from "@/types/database";
+import { getTenantId } from "./get-tenant-id";
 
 export async function getRecipes(): Promise<Recipe[]> {
   const supabase = createClient();
@@ -54,6 +55,7 @@ export async function createRecipe(values: {
       hpp,
       yield_qty: values.yield_qty,
       yield_unit: values.yield_unit,
+      tenant_id: await getTenantId(),
     })
     .select()
     .single();

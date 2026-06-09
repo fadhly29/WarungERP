@@ -67,10 +67,14 @@ export function MenuForm({ open, onOpenChange, editingMenu, recipes, onSuccess }
       selling_price: sellingPrice,
     };
 
-    if (editingMenu) {
-      await updateMutation.mutateAsync({ id: editingMenu.id, ...values });
-    } else {
-      await createMutation.mutateAsync(values);
+    try {
+      if (editingMenu) {
+        await updateMutation.mutateAsync({ id: editingMenu.id, ...values });
+      } else {
+        await createMutation.mutateAsync(values);
+      }
+    } catch {
+      // error handled by mutation state / parent
     }
   };
 

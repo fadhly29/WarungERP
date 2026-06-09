@@ -213,6 +213,23 @@ create table profit_reports (
   created_at timestamp with time zone default now()
 );
 
+-- Auto-set tenant_id on all business table inserts from auth context
+create or replace function set_tenant_id()
+returns trigger as $$
+begin
+  if new.tenant_id is null then
+    new.tenant_id := get_tenant_id();
+  end if;
+  return new;
+end;
+$$ language plpgsql security definer;
+
+create trigger trg_ingredients_tenant before insert on ingredients for each row execute function set_tenant_id();
+create trigger trg_recipes_tenant before insert on recipes for each row execute function set_tenant_id();
+create trigger trg_menus_tenant before insert on menus for each row execute function set_tenant_id();
+create trigger trg_inventory_tenant before insert on inventory for each row execute function set_tenant_id();
+create trigger trg_purchase_orders_tenant before insert on purchase_orders for each row execute function set_tenant_id();
+
 -- RLS Policies
 alter table tenants enable row level security;
 alter table users enable row level security;

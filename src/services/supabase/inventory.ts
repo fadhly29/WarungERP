@@ -1,5 +1,6 @@
 import { createClient } from "@/lib/supabase/client";
 import type { Inventory } from "@/types/database";
+import { getTenantId } from "./get-tenant-id";
 
 export async function getInventory(): Promise<Inventory[]> {
   const supabase = createClient();
@@ -32,7 +33,7 @@ export async function createInventoryItem(values: {
   const supabase = createClient();
   const { error } = await supabase
     .from("inventory")
-    .insert(values);
+    .insert({ ...values, tenant_id: await getTenantId() });
 
   if (error) throw new Error(error.message);
 }
