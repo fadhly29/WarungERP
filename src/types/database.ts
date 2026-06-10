@@ -96,12 +96,12 @@ export interface Inventory {
   deleted_at: string | null;
 }
 
-export interface PurchaseOrder {
+export interface PreOrder {
   id: string;
   tenant_id: string;
   po_number: string;
-  supplier: string;
-  status: "draft" | "sent" | "received";
+  customer_name: string;
+  status: "draft" | "confirmed" | "fulfilled";
   total: number;
   notes: string | null;
   is_public: boolean;
@@ -110,7 +110,7 @@ export interface PurchaseOrder {
   deleted_at: string | null;
 }
 
-export interface PurchaseOrderItem {
+export interface PreOrderItem {
   id: string;
   po_id: string;
   ingredient_id: string;

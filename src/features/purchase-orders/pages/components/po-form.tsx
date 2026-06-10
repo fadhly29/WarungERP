@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
-import { createPurchaseOrder } from "@/services/supabase/purchase-orders";
+import { createPreOrder } from "@/services/supabase/pre-orders";
 import { getIngredients } from "@/services/supabase/ingredients";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -28,15 +28,15 @@ interface LineItem {
   total: number;
 }
 
-interface POFormProps {
+interface PreOrderFormProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onSuccess: () => void;
 }
 
-export function POForm({ open, onOpenChange, onSuccess }: POFormProps) {
+export function PreOrderForm({ open, onOpenChange, onSuccess }: PreOrderFormProps) {
   const [poNumber, setPoNumber] = useState(`PO-${Date.now().toString().slice(-6)}`);
-  const [supplier, setSupplier] = useState("");
+  const [customerName, setCustomerName] = useState("");
   const [notes, setNotes] = useState("");
   const [items, setItems] = useState<LineItem[]>([]);
 
@@ -46,7 +46,7 @@ export function POForm({ open, onOpenChange, onSuccess }: POFormProps) {
   });
 
   const createMutation = useMutation({
-    mutationFn: createPurchaseOrder,
+    mutationFn: createPreOrder,
     onSuccess: () => {
       onSuccess();
       onOpenChange(false);
@@ -56,7 +56,7 @@ export function POForm({ open, onOpenChange, onSuccess }: POFormProps) {
 
   const resetForm = () => {
     setPoNumber(`PO-${Date.now().toString().slice(-6)}`);
-    setSupplier("");
+    setCustomerName("");
     setNotes("");
     setItems([]);
   };
@@ -100,7 +100,7 @@ export function POForm({ open, onOpenChange, onSuccess }: POFormProps) {
     try {
       await createMutation.mutateAsync({
         po_number: poNumber,
-        supplier,
+        customer_name: customerName,
         notes: notes || undefined,
         items: items.map(({ key, ...rest }) => rest),
       });
@@ -119,7 +119,7 @@ export function POForm({ open, onOpenChange, onSuccess }: POFormProps) {
     >
       <DialogContent className="max-w-2xl">
         <DialogHeader>
-          <DialogTitle>Buat Purchase Order</DialogTitle>
+          <DialogTitle>Buat Pre Order</DialogTitle>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="grid grid-cols-2 gap-4">
@@ -128,8 +128,8 @@ export function POForm({ open, onOpenChange, onSuccess }: POFormProps) {
               <Input id="po_number" value={poNumber} onChange={(e) => setPoNumber(e.target.value)} required />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="supplier">Supplier</Label>
-              <Input id="supplier" value={supplier} onChange={(e) => setSupplier(e.target.value)} required placeholder="Toko Maju Jaya" />
+              <Label htmlFor="customer_name">Nama Pelanggan</Label>
+              <Input id="customer_name" value={customerName} onChange={(e) => setCustomerName(e.target.value)} required placeholder="Budi Santoso" />
             </div>
           </div>
           <div className="space-y-2">
@@ -139,7 +139,7 @@ export function POForm({ open, onOpenChange, onSuccess }: POFormProps) {
 
           <div className="space-y-3">
             <div className="flex items-center justify-between">
-              <Label>Item</Label>
+              <Label>Item Pesanan</Label>
               <Button type="button" variant="outline" size="sm" onClick={handleAddItem}>
                 <Plus className="h-3.5 w-3.5" /> Tambah Item
               </Button>

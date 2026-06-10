@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useMutation } from "@tanstack/react-query";
-import { createPurchaseOrder } from "@/services/supabase/purchase-orders";
+import { createPreOrder } from "@/services/supabase/pre-orders";
 import { getIngredients } from "@/services/supabase/ingredients";
 import { useQuery } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
@@ -24,8 +24,8 @@ interface LineItem {
   total: number;
 }
 
-export default function PublicPONewPage() {
-  const [supplier, setSupplier] = useState("");
+export default function PublicPreOrderPage() {
+  const [customerName, setCustomerName] = useState("");
   const [items, setItems] = useState<LineItem[]>([]);
   const [submitted, setSubmitted] = useState(false);
 
@@ -35,7 +35,7 @@ export default function PublicPONewPage() {
   });
 
   const createMutation = useMutation({
-    mutationFn: createPurchaseOrder,
+    mutationFn: createPreOrder,
     onSuccess: () => setSubmitted(true),
   });
 
@@ -75,7 +75,7 @@ export default function PublicPONewPage() {
     e.preventDefault();
     await createMutation.mutateAsync({
       po_number: `PUB-${Date.now().toString().slice(-6)}`,
-      supplier,
+      customer_name: customerName,
       is_public: true,
       items: items.map(({ key, ...rest }) => rest),
     });
@@ -89,9 +89,9 @@ export default function PublicPONewPage() {
             <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-emerald-100">
               <CheckCircle2 className="h-6 w-6 text-emerald-600" />
             </div>
-            <CardTitle className="mt-4">Order Terkirim!</CardTitle>
+            <CardTitle className="mt-4">Pre Order Terkirim!</CardTitle>
             <CardDescription>
-              Purchase order kamu sudah disimpan. Kami akan menghubungi kamu segera.
+              Pre order kamu sudah disimpan. Kami akan menghubungi kamu segera.
             </CardDescription>
           </CardHeader>
         </Card>
@@ -103,16 +103,16 @@ export default function PublicPONewPage() {
     <div className="flex min-h-screen items-start justify-center bg-slate-50 p-4 pt-12">
       <Card className="w-full max-w-lg">
         <CardHeader>
-          <CardTitle>Purchase Order</CardTitle>
+          <CardTitle>Pre Order</CardTitle>
           <CardDescription>
-            Isi form di bawah untuk membuat pesanan bahan baku.
+            Isi form di bawah untuk membuat pre order.
           </CardDescription>
         </CardHeader>
         <form onSubmit={handleSubmit}>
           <CardContent className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="supplier">Nama Supplier / Toko</Label>
-              <Input id="supplier" value={supplier} onChange={(e) => setSupplier(e.target.value)} required placeholder="Nama toko kamu..." />
+              <Label htmlFor="customer_name">Nama Kamu</Label>
+              <Input id="customer_name" value={customerName} onChange={(e) => setCustomerName(e.target.value)} required placeholder="Nama kamu..." />
             </div>
 
             <div className="space-y-3">
@@ -161,8 +161,8 @@ export default function PublicPONewPage() {
             </div>
           </CardContent>
           <CardContent>
-            <Button type="submit" className="w-full" disabled={createMutation.isPending || items.length === 0 || !supplier}>
-              {createMutation.isPending ? <Spinner className="py-0" /> : "Kirim Order"}
+            <Button type="submit" className="w-full" disabled={createMutation.isPending || items.length === 0 || !customerName}>
+              {createMutation.isPending ? <Spinner className="py-0" /> : "Kirim Pre Order"}
             </Button>
           </CardContent>
         </form>
